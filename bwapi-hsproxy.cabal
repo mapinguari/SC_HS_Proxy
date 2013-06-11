@@ -1,0 +1,32 @@
+name:         bwapi-hsproxy
+version:      0.0
+cabal-version: >= 1.8.0.4
+build-type:   Simple
+author:       Aaron Keller
+maintainer:   Unknown
+stability:    unknown
+bug-reports:  http://code.google.com/p/bwapi-hsproxy/issues/list
+package-url:  https://bwapi-hsproxy.googlecode.com/hg/
+data-dir:     /Proxy
+
+library
+  build-depends: network > 2.2.3.1,
+                 base,
+                 parsec
+  exposed-modules: Proxy.Commands
+                   Proxy.CommandTypes
+                   Proxy.Game
+                   Proxy.Messages
+                   Proxy.Orders
+                   Proxy.Parsers
+                   Proxy.Server
+                   Proxy.Settings
+                   Proxy.Tech
+                   Proxy.TechTypes
+                   Proxy.Unit
+                   Proxy.UnitTypes
+                   Proxy.Upgrade
+                   Proxy.UpgradeTypes
+                   Helpers
+	   
+	
