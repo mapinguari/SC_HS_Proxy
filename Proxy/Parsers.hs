@@ -67,8 +67,8 @@ location = args2 int int
 startingLocations :: Parser [Location]
 startingLocations = locationHeader >> location `sepBy1` groupDelim
 
-mapHeader :: Parser ([Tile] -> MapData)
-mapHeader = groupCon3 MapData name int int
+mapHeader :: Parser ([[Tile]] -> Map)
+mapHeader = groupCon3 Map name int int
 
 tile :: Parser Tile
 tile = do
@@ -77,12 +77,22 @@ tile = do
        w <- bool
        return $ Tile (read [d]) b w
 
-mapData :: Parser MapData
+tileline :: Int -> Parser [Tile]
+tileline n = do 
+             line <- count n tile
+             return line
+
+mapData :: Parser Map
 mapData = do
-          m     <- mapHeader
-          groupDelim
-          tiles <- many1 tile
-          return $ m tiles
+            mapName <- name
+            groupDelim
+            mapWidth <- int
+            groupDelim
+            mapHeight <- int
+            groupDelim
+            let m = Map mapName mapWidth mapHeight
+            tiles <- many (tileline mapWidth)
+            return $ m tiles
 
 chokeHeader :: Parser Char
 chokeHeader = string "Chokes" >> groupDelim

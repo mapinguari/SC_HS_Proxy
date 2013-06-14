@@ -54,7 +54,7 @@ data GameState = GameState { gameResources     :: Resources
 -- | Information about the current game
 data GameInfo = GameInfo { gamePlayers           :: [Player]
                          , gameStartingLocations :: [Location]
-                         , gameMap               :: MapData
+                         , gameMap               :: Map
                          , gameTerrain           :: (Maybe (ChokeData, BaseData))
                          } deriving Show
 

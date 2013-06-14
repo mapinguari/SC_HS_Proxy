@@ -12,6 +12,7 @@ import qualified Proxy.Settings as Settings
 import Proxy.Messages
 import Proxy.Commands
 import Proxy.Parsers
+import Proxy.Game
 
 botOptions = Options [Settings.allowUserControl,
                       Settings.allowCompleteInformation,
@@ -47,10 +48,10 @@ startup connection = do
                      send connection botOptions
                      print botOptions
                      startingLocations <- receive connection startingLocations
-                     mapData <- receive connection mapData
-                     putStr.show.(\(MapData n x y xs) -> (n,x,y, (length xs))) $ mapData 
+                     map <- receive connection mapData
+                     print $ (\(Map n x y xss) -> (length xss)) map
                      terrainData <- receiveTerrain connection
-                     return $ GameInfo players startingLocations mapData terrainData
+                     return $ GameInfo players startingLocations map terrainData
 
 ---------------------------
 -- AI Synchronization

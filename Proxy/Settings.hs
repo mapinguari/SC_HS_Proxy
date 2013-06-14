@@ -20,7 +20,7 @@ allowCompleteInformation = False
 
 -- | Print commands to console running the proxy
 printCommandsToConsole :: Bool
-printCommandsToConsole = True
+printCommandsToConsole = False
 
 -- | Perform terrain analysis at start
 performTerrainAnalysis :: Bool

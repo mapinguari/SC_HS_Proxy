@@ -79,6 +79,7 @@ data Player = Me PlayerInfo
 
 -- | Map information, name, dimensions and a list of areas,
 data Map = Map Name Width Height [[Tile]]
+     deriving Show
 
 -- | Information about map regions which restrict movement, location and width
 data Choke = Choke Location Width deriving Show
