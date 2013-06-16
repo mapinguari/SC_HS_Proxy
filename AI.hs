@@ -8,7 +8,13 @@ import Proxy.Orders
 import Proxy.Unit
 import Proxy.UnitTypes
 
+
 onStart = id
+
+--let (GameInfo p s m t) = g in 
+  --          GameInfo p s (map vectorize m) t 
+
+
 
 onFrame onStartData gameState history myState = let
                                                 players = gamePlayers onStartData

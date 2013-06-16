@@ -40,6 +40,11 @@ type Walkable = Bool
 
 data Tile = Tile Height Buildable Walkable deriving Show
 
+getWalkable :: Tile -> Int
+getWalkable (Tile h b w) 
+            | w == True = 1
+            | otherwise = 0
+
 -- | All the species in SC
 
 data Race = Zerg
