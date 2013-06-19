@@ -13,6 +13,8 @@ import Proxy.Messages
 import Proxy.Commands
 import Proxy.Parsers
 import Proxy.Game
+import Proxy.Paul.Terrain
+
 
 botOptions = Options [Settings.allowUserControl,
                       Settings.allowCompleteInformation,
@@ -95,23 +97,12 @@ firstFrame conn stateVar commVar = do
 server onStart onFrame socket = do
                                 connection <- accept socket
                                 gameInfo   <- startup connection
-                                print $ map vectorize ((\(Map n w h tss) -> tss)((\(GameInfo p s m t) -> m ) gameInfo))
+                                print $ arraycolour gameInfo
                                 stateVar   <- newEmptyMVar
                                 commVar    <- newEmptyMVar
                                 forkIO $ aiThread stateVar commVar (onStart gameInfo) onFrame
                                 firstFrame connection stateVar commVar
                                 loop connection stateVar commVar
-
-vectorize :: [Tile] -> [(Int, Bool)]
-vectorize (x:xs) = vectorizeIter (1,w) xs
-                   where (Tile h b w) = x
-
-vectorizeIter :: (Int, Bool) -> [Tile] -> [(Int,Bool)]
-vectorizeIter (n,b) [] = [(n,b)]
-vectorizeIter (n,b) (x:xs) = let (Tile h bi w) = x in
-                             case (w == b) of
-                             True -> vectorizeIter (n+1,b) xs
-                             False -> (n,b):(vectorizeIter (1,w) xs)
 
 ---------------------------
 -- Server entry-point
