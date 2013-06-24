@@ -4,6 +4,8 @@ import Control.Monad.State
 import Proxy.Messages
 import Proxy.Game
 
+
+{-
 data NavTag = NT {height :: Int, node :: Int}
      deriving (Show, Eq)
 
@@ -59,7 +61,7 @@ fmap
 
 
 
-{-
+
 data Polygon = Poly{ tl :: (Int, Int), br :: (Int, Int)}
      deriving (Show)
 
@@ -86,3 +88,42 @@ rowiter :: [Polygon] -> [Polygon] -> [Polygon]
 rowiter (p:ps) (q:qs) 
         | abs(fst (tl p) - fst (tl q)) <= 8  
 -}
+
+data NavTag = NT {row :: Int, colS :: Int, colF :: Int, height :: Int, node :: Int}
+
+type MappingState = (Int,Int,Int,Int,Int,[(Int,Int)])
+-- Row, Starting Col, Current Col, height, node, graph verticies
+
+g :: Tile -> State MappingState (Maybe NavTag)
+g (Tile h b w) = state (\ (r,s,c,h',n,xs) -> case (r,s,c,h',n,xs) of
+  	       	       	  	       (r,(-1),c,_,n,xs) -> if w == False then (Nothing, (r,(-1),c+1,h,n,xs)) else (Nothing,(r,c,c+1,h,n+1,xs))
+				       (r,s,c,h',n,xs) -> if w == True 
+				       		          then if (h == h') then (Nothing,(r,c,c+1,h,n+1,xs)) else (Just (NT r s (c-1) h' n), (r,c,c+1,h,n+1,((n,n+1):xs)))
+						     	  else (Just (NT r s c h' n),(r, (-1),c+1,h,n,xs)))
+
+rower :: [Tile] -> State MappingState [NavTag]
+rower [] = do
+      	   st <- get 
+	   let (r,s,c,h,n,xs) = st 
+	   if s == (-1) then return [] else return [NT r s (c-1) h n]
+rower (x:xs) = do 
+      	     tileOut <- g x
+	     tileRow <- rower xs
+	     case tileOut of 
+	     	  Nothing -> return tileRow
+	   	  Just navtag -> return (navtag:tileRow)
+
+
+comp :: [[Tile]] -> State MappingState [[NavTag]]
+comp tss = case tss of
+	   [] -> return []
+	   (nt:ts) -> do 
+	   	      row <- rower nt
+		      st <- get
+		      let (r,s,c,h,n,xs) = st
+		      put (Nothing, (r+1,(-1), 1, 0, n,xs))
+		      rest <- comp ts
+		      return (row:rest)
+
+
+--END OF ROW CHECKER
