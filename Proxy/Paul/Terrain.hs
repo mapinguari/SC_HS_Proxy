@@ -1,11 +1,11 @@
 module Proxy.Paul.Terrain where
 import Data.Array
 import Control.Monad.State
-import Proxy.Messages
+import Proxy.Messages (gameInfo)
 import Proxy.Game
 
 
-{-
+
 data NavTag = NT {height :: Int, node :: Int}
      deriving (Show, Eq)
 
