@@ -97,7 +97,7 @@ firstFrame conn stateVar commVar = do
 server onStart onFrame socket = do
                                 connection <- accept socket
                                 gameInfo   <- startup connection
-                                print $ arraycolour gameInfo
+                                print $ makeMap gameInfo
                                 stateVar   <- newEmptyMVar
                                 commVar    <- newEmptyMVar
                                 forkIO $ aiThread stateVar commVar (onStart gameInfo) onFrame
