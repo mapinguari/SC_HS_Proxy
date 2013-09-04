@@ -40,6 +40,7 @@ type Walkable = Bool
 
 data Tile = Tile Height Buildable Walkable deriving Show
 
+walkable :: Tile -> Walkable
 walkable (Tile g b w) = w
 
 instance Eq Tile where
