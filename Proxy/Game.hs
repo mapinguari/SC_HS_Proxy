@@ -19,10 +19,10 @@ type Name = String
 type Location = (Int, Int)
 
 -- | Width of object
-type Width = Int
+type Width = Integer
 
 -- | Height of object
-type Height = Int
+type Height = Integer
 
 -- | Not sure
 type Slot = Int

@@ -1,33 +1,44 @@
 module Proxy.Paul.Graph where
 
 import Data.Array
-import qualified Data.List as List (sort)
+import Proxy.Game
+import qualified Data.Set as S
 
-type Node = Int
-type Distance = Double
+type Graph n w = Array n [(n,w)]
 
-data Graph = Graph {adj :: Node -> [Node], size :: Int}
+--Monoid w ? does that work?
 
-gFSAL :: [[(Node,Distance)]] -> Graph
-gFSAL xs = let adjmap n = if n+1 <= length xs
-                          then xs !! (n-1)
-                          else error "Node not in array" in Graph {adjmap, length xs}
-                  
-gFAL :: [[Node]] -> Graph
-gFAL xs = let ys = map List.sort xs in gFSAL ys
+adjacent :: (Ix n,Num w) => (Graph n w) -> n -> [n]
+adjacent g n = if n `elem` nodes g 
+               then map fst (g ! n)
+                    else error "node not in graph"
+                         
+nodes :: (Ix n, Num w) => Graph n w -> [n]
+nodes  = range.bounds 
 
-gFAM :: Array (Node,Node) Double -> Graph
-gFAM a = let bS = bounds a
-             ys = [[j|j<-[(snd.fst) bS .. (snd.snd) bS], a!(i,j) == True]| i<-[(fst.fst) bS .. (fst.snd) bS]] in gFSAL ys
+edges :: (Ix n, Num w) => Graph n w -> [(n,n,w)]
+edges g = [(i,j,w)| i<- nodes g, (j,w) <- filter ((<i).fst) (g!i)]
+                       
+edgeIn :: (Ix n, Num w) => Graph n w -> (n,n) -> Bool
+edgeIn g x = case uncurry (weight g) x of 
+  Just y -> True
+  Nothing -> False
 
-g1 = gFAM $ listArray ((1,1),(3,3)) $ map f "011101110"
-     where f :: Char -> Bool
-           f n
-             | n == '0' = False
-             | otherwise = True
+weight :: (Ix n, Num w) => Graph n w -> n -> n -> Maybe w
+weight g n m = case filter ((==m).fst) $ g!n of
+  [x] -> Just $ snd x
+  [] -> Nothing
 
-size :: Graph -> Int
-size g 
+sweight :: (Ix n, Num w) => Graph n w -> n -> n -> w
+sweight g n m = case weight g n m of
+   Just a -> a 
+   Nothing -> error "edge not in graph, no weight"
 
-edges :: Graph -> [(Node,Node)]
-edges g = [ map ((,) i) (takeWhile (>= i) $ g i) | i <- size g]
+depthFirstSearch :: (Ix n, Num w) => Graph n w -> n -> [n]
+depthFirstSearch g s = dfs g [s] S.empty
+
+dfs :: (Ix n, Num w) => Graph n w -> [n] -> S.Set n -> [n]
+dfs g [] xs = S.toList xs
+dfs g (x:xs) ys = if (S.member x ys)
+                  then dfs g xs ys
+                  else dfs g ((adjacent g x)++xs) (S.insert x ys) 

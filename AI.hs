@@ -11,10 +11,7 @@ import Proxy.UnitTypes
 
 onStart = id
 
---let (GameInfo p s m t) = g in 
-  --          GameInfo p s (map vectorize m) t 
-
-
+-- Utilize some concurrent shit on units currently with actions
 
 onFrame onStartData gameState history myState = let
                                                 players = gamePlayers onStartData
@@ -26,7 +23,6 @@ onFrame onStartData gameState history myState = let
                                                 myBoredUnits = getUnitsWithOrder PlayerGuard myWorkers
                                                 myCommandCenter = filter (isBuilding.unitType) myUnits
                                                 probing = train (unitId.head $ myCommandCenter) myWorker
-                                                
                                                 minerals = getMinerals units
                                                 pairs = matchWith closest myBoredUnits  minerals
                                                 pairIds = map (\(a,b) -> (unitId a, unitId b))

@@ -13,7 +13,7 @@ import Proxy.Messages
 import Proxy.Commands
 import Proxy.Parsers
 import Proxy.Game
-import Proxy.Paul.Terrain
+
 
 
 botOptions = Options [Settings.allowUserControl,
@@ -97,7 +97,6 @@ firstFrame conn stateVar commVar = do
 server onStart onFrame socket = do
                                 connection <- accept socket
                                 gameInfo   <- startup connection
-                                print $ makeMap gameInfo
                                 stateVar   <- newEmptyMVar
                                 commVar    <- newEmptyMVar
                                 forkIO $ aiThread stateVar commVar (onStart gameInfo) onFrame
@@ -108,5 +107,5 @@ server onStart onFrame socket = do
 -- Server entry-point
 ---------------------------
 
-run :: (GameInfo -> a) -> (a -> GameState -> [GameState] -> Maybe b -> ([Command], Maybe b)) -> IO ()
+run :: (GameInfo -> GameInfo) -> (GameInfo -> GameState -> [GameState] -> Maybe b -> ([Command], Maybe b)) -> IO ()
 run onStart onFrame = withSocketsDo $ bracket (listenOn Settings.port) (sClose) (server onStart onFrame)

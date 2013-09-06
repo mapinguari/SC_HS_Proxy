@@ -1,7 +1,7 @@
 module Proxy.Paul.Terrain where
 import Data.Array
 import Control.Monad.State
-import Proxy.Messages (gameInfo)
+import Proxy.Messages 
 import Proxy.Game
 
 
@@ -17,7 +17,7 @@ arraycolour g = let (Map n h w tss) = (gameMap g)  in
                 listArray ((1,1), (h,w)) (concat $ mapper tss) 
 
 
-
+{-
 g :: Tile -> State (NavTag,Int) NavTag
 g (Tile h b w) = state (\ (nt,n) -> if w == False then (impasse,(impasse,n)) 
                                                   else case h == height nt of 
