@@ -1,4 +1,4 @@
-module Proxy.UpgradeTypes where
+module Proxy.Types.UpgradeTypes where
 -- ^ Module contains all upgradetypes for all species
 
 data UpgradeType = TerranInfantryArmor

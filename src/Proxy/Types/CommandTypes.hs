@@ -1,10 +1,6 @@
 -- | This is very similar to 'Orders' this datatype is for issuing commands using commands in 'Commands' where as 'Orders' is used to populate the 'Messages.UnitOrder' field of UnitData in 'Messages'
 
-module Proxy.CommandTypes where
-import Proxy.Game
-import Proxy.UnitTypes
-import Proxy.UpgradeTypes
-import Proxy.TechTypes
+module Proxy.Types.CommandTypes where
 
 -- | All the commands it is possible for the AI to issue to units
 data CommandType = NoneCommand

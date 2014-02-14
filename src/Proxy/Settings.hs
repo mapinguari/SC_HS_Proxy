@@ -1,4 +1,4 @@
--- | some AI setup options including server port and history length
+ -- | some AI setup options including server port and history length
 module Proxy.Settings where
 import Network
 
@@ -25,3 +25,11 @@ printCommandsToConsole = False
 -- | Perform terrain analysis at start
 performTerrainAnalysis :: Bool
 performTerrainAnalysis = False
+
+--absolute path only atm
+logDir :: String
+logDir = "/home/mapinguari/Project/Logs/"
+
+--absolute path atm 
+mapDataBaseDir :: String
+mapDataBaseDir = "/home/mapinguari/Project/MapDB/"

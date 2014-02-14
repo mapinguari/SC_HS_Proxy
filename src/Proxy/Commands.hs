@@ -1,10 +1,10 @@
 module Proxy.Commands where
-import Proxy.Game
-import Proxy.Messages
-import Proxy.UnitTypes
-import Proxy.TechTypes
-import Proxy.UpgradeTypes
-import qualified Proxy.CommandTypes as CT
+import Proxy.Types.Game
+import Proxy.Server.Messages
+import Proxy.Types.UnitTypes
+import Proxy.Types.TechTypes
+import Proxy.Types.UpgradeTypes
+import qualified Proxy.Types.CommandTypes as CT
 
 ---------------------------------------------------------------
 -- * Commands

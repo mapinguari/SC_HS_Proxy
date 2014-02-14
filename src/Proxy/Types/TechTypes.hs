@@ -1,4 +1,4 @@
-module Proxy.TechTypes where
+module Proxy.Types.TechTypes where
 -- | The datatype containing all units special abilites
 data TechType = Stimpacks
               | Lockdown

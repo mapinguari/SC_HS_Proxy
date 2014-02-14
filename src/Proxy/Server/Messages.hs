@@ -1,19 +1,13 @@
-module Proxy.Messages where
-import Proxy.Game
-import Proxy.TechTypes
-import Proxy.UpgradeTypes
-import Proxy.UnitTypes
-import Proxy.CommandTypes
-import qualified Proxy.Orders as Orders
+module Proxy.Server.Messages where
+import Proxy.Types.Game
+import Proxy.Types.ImportAllTypes
+import qualified Proxy.Types.Orders as Orders
 
 -- | I am not sure, a list of players
 type Ack = [Player]
 
 -- | List of starting locations, unsure if used for possible starting locations or for starting locations of players this match
 type StartingLocations = [Location]
-
--- | Map data, consider rewriting for field names
-data MapData = MapData Name Width Height [Tile] deriving Show
 
 -- | List of Chokepoints on the map
 type ChokeData = [Choke]
@@ -54,11 +48,15 @@ data GameState = GameState { gameResources     :: Resources
 -- | Information about the current game
 data GameInfo = GameInfo { gamePlayers           :: [Player]
                          , gameStartingLocations :: [Location]
-                         , gameMap               :: Map
+                         , gameMap               :: MapData
                          , gameTerrain           :: (Maybe (ChokeData, BaseData))
-                         } deriving Show
-
-
+                         }
+                
+instance Show GameInfo where 
+  show (GameInfo gP gSL gM gT) = "Players \n" ++ playersAndLocations 
+    where playersAndLocations = unlines $ map f $ zip gP gSL
+          f (p,l) = show p ++ " at " ++ show l
+        
 -- | List of selected options about the current game
 data Options = Options [Bool] deriving Show
 -- | String of arguments for a command

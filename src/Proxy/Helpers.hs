@@ -1,10 +1,11 @@
+
 -- | Some useful functions
-module Helpers where
-import Proxy.Game
-import Proxy.Messages
-import qualified Proxy.Orders as Orders
-import qualified Proxy.Unit as Unit
-import Proxy.UnitTypes
+module Proxy.Helpers where
+import Proxy.Types.Game
+import Proxy.Server.Messages
+import qualified Proxy.Types.Orders as Orders
+import qualified Proxy.Query.Unit as Unit
+import Proxy.Types.UnitTypes
 
 isMe :: Player -> Bool
 isMe (Me _) = True
@@ -25,12 +26,12 @@ hasOrder order = (order ==) . unitOrder
 isType :: UnitType -> UnitData -> Bool
 isType uType = (uType ==) . unitType
 
-distance :: (Int, Int) -> (Int, Int) -> Int
-distance (x1, y1) (x2, y2) = ceiling (sqrt (dx**2 + dy**2)) where
+distance :: (Floating a) => (Int, Int) -> (Int, Int) -> a
+distance (x1, y1) (x2, y2) = (sqrt (dx**2 + dy**2)) where
     dx = fromIntegral $ x1 - x2
     dy = fromIntegral $ y1 - y2
 
-distanceFrom :: UnitData -> UnitData -> Int
+distanceFrom :: (Floating a) =>UnitData -> UnitData -> a
 distanceFrom u1 u2 = distance (unitLocation u1) (unitLocation u2)
 
 closer :: UnitData -> UnitData -> UnitData -> UnitData

@@ -1,13 +1,12 @@
 module Main where
-import Helpers
-import Proxy.Server
-import Proxy.Game
-import Proxy.Messages
+import Proxy.Helpers
+import Proxy.Server.Server
+import Proxy.Types.Game
+import Proxy.Server.Messages
 import Proxy.Commands
-import Proxy.Orders
-import Proxy.Unit
-import Proxy.UnitTypes
-
+import Proxy.Types.Orders
+import Proxy.Query.Unit
+import Debug.Trace (trace)
 
 onStart = id
 
@@ -21,12 +20,10 @@ onFrame onStartData gameState history myState = let
                                                 myWorkers = filter (isWorker . unitType) myUnits
                                                 myWorker = unitType.head $ myWorkers
                                                 myBoredUnits = getUnitsWithOrder PlayerGuard myWorkers
-                                                myCommandCenter = filter (isBuilding.unitType) myUnits
-                                                probing = train (unitId.head $ myCommandCenter) myWorker
                                                 minerals = getMinerals units
                                                 pairs = matchWith closest myBoredUnits  minerals
                                                 pairIds = map (\(a,b) -> (unitId a, unitId b))
-                                                commands =probing : (map (uncurry rightClickOn) (pairIds pairs))
+                                                commands = (map (uncurry rightClickOn) (pairIds pairs))
                                              in (commands, myState)
 
-main = Proxy.Server.run onStart onFrame
+main = Proxy.Server.Server.run onStart onFrame

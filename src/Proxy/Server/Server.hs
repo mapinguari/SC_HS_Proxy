@@ -1,4 +1,4 @@
-module Proxy.Server
+module Proxy.Server.Server
   (run)
 where
 import Network
@@ -9,17 +9,18 @@ import Control.Concurrent
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import qualified Proxy.Settings as Settings
-import Proxy.Messages
+import Proxy.Server.Messages
 import Proxy.Commands
-import Proxy.Parsers
-import Proxy.Game
-
-
+import Proxy.Server.Parsers
+import System.Time
+import Proxy.Server.Log
 
 botOptions = Options [Settings.allowUserControl,
                       Settings.allowCompleteInformation,
                       Settings.printCommandsToConsole,
                       Settings.performTerrainAnalysis]
+             
+
 
 ---------------------------
 -- Network functions
@@ -43,7 +44,9 @@ receiveTerrain connection = if Settings.performTerrainAnalysis
                                  baseData  <- receive connection baseData
                                  return $ Just (chokeData, baseData)
                             else return Nothing
+                                 
 
+        
 startup connection = do
                      players <- receive connection ack
                      print players
@@ -52,7 +55,11 @@ startup connection = do
                      startingLocations <- receive connection startingLocations
                      maping <- receive connection mapData
                      terrainData <- receiveTerrain connection
-                     return $ GameInfo players startingLocations maping terrainData
+                     let gameInfo = GameInfo players startingLocations maping terrainData
+                     time <- toCalendarTime =<< getClockTime
+                     logHandle <- startLog gameInfo botOptions time
+                     hClose logHandle
+                     return gameInfo
 
 
 ---------------------------

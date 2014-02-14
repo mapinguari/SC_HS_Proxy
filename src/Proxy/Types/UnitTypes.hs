@@ -1,4 +1,4 @@
-module Proxy.UnitTypes where
+module Proxy.Types.UnitTypes where
 -- ^ This module contains the unit types for all species as a datatype.
 
 data UnitType = TerranMarine

@@ -1,6 +1,5 @@
 -- | This module contains all possible actions a unit could be engaged in. This information is contained in 'Messages.UnitData'
-module Proxy.Orders where
-
+module Proxy.Types.Orders where
 
 data Order = Die
 	       | Stop

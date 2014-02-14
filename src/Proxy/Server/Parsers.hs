@@ -1,12 +1,12 @@
-module Proxy.Parsers where
+module Proxy.Server.Parsers where
 import Prelude hiding (id)
 import Text.ParserCombinators.Parsec
-import Proxy.Game
-import Proxy.TechTypes
-import Proxy.UnitTypes (UnitType)
-import Proxy.UpgradeTypes
-import Proxy.Messages
-import Proxy.Orders (Order)
+import Proxy.Types.Game
+import Proxy.Types.TechTypes
+import Proxy.Types.UnitTypes (UnitType)
+import Proxy.Types.UpgradeTypes
+import Proxy.Server.Messages
+import Proxy.Types.Orders (Order)
 
 id :: Parser Int
 id = int
@@ -67,8 +67,8 @@ location = args2 int int
 startingLocations :: Parser [Location]
 startingLocations = locationHeader >> location `sepBy1` groupDelim
 
-mapHeader :: Parser ([[Tile]] -> Map)
-mapHeader = groupCon3 Map name int int
+mapHeader :: Parser ([[Tile]] -> MapData)
+mapHeader = groupCon3 MapData name int int
 
 tile :: Parser Tile
 tile = do
@@ -82,7 +82,7 @@ tileline n = do
              line <- count n tile
              return line
 
-mapData :: Parser Map
+mapData :: Parser MapData
 mapData = do
             mapName <- name
             groupDelim
@@ -90,7 +90,7 @@ mapData = do
             groupDelim
             mapHeight <- int
             groupDelim
-            let m = Map mapName mapWidth mapHeight
+            let m = MapData mapName mapWidth mapHeight
             tiles <- many (tileline mapWidth)
             return $ m tiles
 
@@ -240,7 +240,7 @@ groupCon2 = tupleCon2 groups2
 groupCon3 :: (a -> b -> c ->d) -> Parser a -> Parser b -> Parser c -> Parser d
 groupCon3 = tupleCon3 groups3 
 
-int :: Parser Int
+int :: Parser Int 
 int = do
       digits <- many1 digit
       return $ read digits

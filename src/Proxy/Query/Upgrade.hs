@@ -1,7 +1,7 @@
 -- | This module contains the functions to associate a given upgrade with its cost and research location
-module Proxy.Upgrade where
-import Proxy.UnitTypes
-import Proxy.UpgradeTypes
+module Proxy.Query.Upgrade where
+import Proxy.Types.UnitTypes
+import Proxy.Types.UpgradeTypes
 
 whatResearches :: UpgradeType -> UnitType
 -- ^ This function returns the building which allows the arguement upgrade.

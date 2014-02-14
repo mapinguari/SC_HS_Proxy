@@ -1,6 +1,6 @@
-module Proxy.Tech where
-import Proxy.UnitTypes
-import Proxy.TechTypes
+module Proxy.Query.Tech where
+import Proxy.Types.UnitTypes
+import Proxy.Types.TechTypes
 
 whatResearches :: TechType -> UnitType
 -- ^ Returns the unit which researches the arguement Tech

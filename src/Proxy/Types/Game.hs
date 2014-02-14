@@ -1,7 +1,4 @@
-module Proxy.Game where
-import Proxy.Orders
-import Proxy.TechTypes
-import Proxy.UpgradeTypes
+module Proxy.Types.Game where
 
 -- | Identifier
 type Id = Int
@@ -19,10 +16,10 @@ type Name = String
 type Location = (Int, Int)
 
 -- | Width of object
-type Width = Integer
+type Width = Int
 
 -- | Height of object
-type Height = Integer
+type Height = Int
 
 -- | Not sure
 type Slot = Int
@@ -38,20 +35,7 @@ type Walkable = Bool
 
 -- | Contains information about a tile (consider changing to field name based)
 
-data Tile = Tile Height Buildable Walkable deriving Show
-
-walkable :: Tile -> Walkable
-walkable (Tile g b w) = w
-
-instance Eq Tile where
-  t1 == t2 = let (Tile h1 b1 w1) = t1
-                 (Tile h2 b2 w2) = t2 in
-             h1 == h2 && b1 == b2 && w1 == w2
-
-getWalkable :: Tile -> Int
-getWalkable (Tile h b w) 
-            | w == True = 1
-            | otherwise = 0
+data Tile = Tile {height::Height, walkable::Walkable, buildable::Buildable} deriving Show
 
 -- | All the species in SC
 
@@ -83,7 +67,10 @@ data PlayerInfo = PlayerInfo { playerId :: PlayerId
                              , playerRace :: Race
                              , playerName :: Name
                              , playerType :: PlayerType
-                             } deriving Show
+                             }
+                  
+instance Show PlayerInfo where
+  show pI = playerName pI ++ "-" ++ (show.playerRace) pI ++ "-" ++ (show.playerType) pI
 
 -- | DataTypes for each of the types of other players
 data Player = Me PlayerInfo
@@ -91,8 +78,12 @@ data Player = Me PlayerInfo
             | Enemy PlayerInfo deriving Show
 
 -- | Map information, name, dimensions and a list of areas,
-data Map = Map Name Width Height [[Tile]]
-     deriving Show
+data MapData = MapData {mapName :: String, 
+                        mapWidth ::Width,
+                        mapHeight :: Height, 
+                        tiles :: [[Tile]] }
+         deriving Show
+
 
 -- | Information about map regions which restrict movement, location and width
 data Choke = Choke Location Width deriving Show
