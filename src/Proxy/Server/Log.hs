@@ -7,9 +7,13 @@ import Proxy.Settings
 
 startLog :: GameInfo -> Options -> CalendarTime -> IO Handle
 startLog gI bs t = do 
-  logh <- openFile (lDir ++ logName) WriteMode 
-  hPutStr logh startInfo
-  return logh
+    if null lDir 
+      then do logh <- return stdout 
+              hPutStr logh startInfo
+              return logh
+      else do logh <- openFile (lDir ++ logName) WriteMode 
+              hPutStr logh startInfo
+              return logh
     where lDir = Proxy.Settings.logDir
           startInfo = (mapName.gameMap) gI ++ "-" ++ (show.toClockTime) t ++ "\n" ++ show gI 
           logName = (map spaceToUnderScore .mapName.gameMap) gI ++ "_" ++(show.secondsInDay $ t) ++ "-" ++ show (ctYDay t) ++ "-" ++ show (ctYear t)

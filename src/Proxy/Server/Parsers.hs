@@ -177,7 +177,7 @@ gameState = do
             return $ GameState rs s rh u unitData
 
 -- ** Running a parser 
-
+parseMessage :: Parser a -> String -> a
 parseMessage p m = case (parse p "" m) of
                    Left err -> error $ show err
                    Right x  -> x

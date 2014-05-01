@@ -37,6 +37,9 @@ data UnitData = UnitData { unitId        :: UnitId
                          , unitMineCount :: MineCount
                          } deriving Show
 
+instance Eq UnitData where
+  (==) u1 u2 = unitId u1 == unitId u2
+
 -- | Used to contain game state, probably of an individual player
 data GameState = GameState { gameResources     :: Resources
                            , gameSupply        :: Supply
@@ -62,7 +65,7 @@ data Options = Options [Bool] deriving Show
 -- | String of arguments for a command
 type CommandArgs = String
 -- | Data structure for a command
-data Command = Command CommandType CommandArgs deriving (Show, Eq)
+data Command = Command {commandType :: CommandType, subject :: UnitId, commandArgs :: CommandArgs} deriving (Show, Eq)
 -- | A list of commands
 data Commands = Commands [Command]
 
@@ -94,7 +97,7 @@ instance Serialize TechType where
     serializes = shows . fromEnum
 
 instance Serialize Command where
-    serializes (Command t args) = serializes t . (';':) . (args ++)
+    serializes (Command t s args) = serializes t . (';':) . (args ++)
 
 instance Serialize Commands where
     serializes (Commands []) = ("" ++)

@@ -1,6 +1,4 @@
-module Proxy.Server.Server
-  (run)
-where
+module Proxy.Server.Server (run) where
 import Network
 import System.IO
 import Control.Monad
@@ -14,30 +12,38 @@ import Proxy.Commands
 import Proxy.Server.Parsers
 import System.Time
 import Proxy.Server.Log
+import Text.Parsec.String (Parser)
+import Proxy.AIFunctions (AnalysedGameInfo)
+import Proxy.Types.Game
+import Data.Char
 
+botOptions :: Options
 botOptions = Options [Settings.allowUserControl,
                       Settings.allowCompleteInformation,
                       Settings.printCommandsToConsole,
                       Settings.performTerrainAnalysis]
-             
-
+showBotOptions = [ "User Control - " ++ show Settings.allowUserControl,
+                   "Complete Information - " ++ show Settings.allowCompleteInformation,
+                   "Print Commands Remotely - " ++ show Settings.printCommandsToConsole,
+                   "Perform Terrain Analysis Remotely - " ++ show Settings.performTerrainAnalysis]                   
 
 ---------------------------
 -- Network functions
 ---------------------------
-
+send :: (Serialize a) => (Handle,HostName,PortNumber) -> a -> IO ()
 send (handle, _, _) message = do
                               hPutStrLn handle (serialize message)
                               hFlush handle
-
-receive (handle, _, _) m = do
+                              
+receive :: (Handle,HostName,PortNumber) -> Parser a -> IO a
+receive (handle, _, _) parser = do
                            line <- hGetLine handle
-                           return $ parseMessage m line
+                           return $ parseMessage parser line
 
 ---------------------------
 -- Startup operations
 ---------------------------
-
+receiveTerrain :: (Handle,HostName,PortNumber) -> IO (Maybe (ChokeData,BaseData))
 receiveTerrain connection = if Settings.performTerrainAnalysis
                             then do
                                  chokeData <- receive connection chokeData
@@ -46,26 +52,25 @@ receiveTerrain connection = if Settings.performTerrainAnalysis
                             else return Nothing
                                  
 
-        
-startup connection = do
+startup :: (Handle,HostName,PortNumber) -> IO (GameInfo,Handle)
+startup connection@(_,host,_) = do 
+                     putStrLn $ "Connection Established - " ++ host
+                     putStrLn $ unlines showBotOptions
                      players <- receive connection ack
-                     print players
                      send connection botOptions
-                     print botOptions
                      startingLocations <- receive connection startingLocations
                      maping <- receive connection mapData
                      terrainData <- receiveTerrain connection
                      let gameInfo = GameInfo players startingLocations maping terrainData
                      time <- toCalendarTime =<< getClockTime
                      logHandle <- startLog gameInfo botOptions time
-                     hClose logHandle
-                     return gameInfo
-
-
+                     return (gameInfo,logHandle)
+                     
 ---------------------------
 -- AI Synchronization
 ---------------------------
 
+aiThread :: MVar GameState -> MVar [Command] -> AnalysedGameInfo -> (AnalysedGameInfo -> GameState -> [GameState] -> Maybe a -> ([Command],Maybe a)) -> IO ()
 aiThread stateVar commVar onStartData onFrame = aiLoop [] Nothing where
     aiLoop history aiState = do
                              gameState <- takeMVar stateVar
@@ -73,7 +78,8 @@ aiThread stateVar commVar onStartData onFrame = aiLoop [] Nothing where
                              putMVar commVar commands
                              let newHistory = history `seq` (take Settings.historyLength (gameState : history))
                              aiLoop newHistory newAIState
-
+                             
+checkAI :: MVar [Command] -> IO (Bool,Commands)
 checkAI commVar = do
                   commVal <- tryTakeMVar commVar
                   makeCommands commVal where
@@ -84,9 +90,11 @@ checkAI commVar = do
 ---------------------------
 -- Server loop
 ---------------------------
-
+                      
+loop :: (Handle, HostName,PortNumber) -> MVar GameState -> MVar [Command] -> IO ()
 loop conn stateVar commVar = do                                       
                              state              <- receive conn gameState
+                             print state
                              (aiDone, commands) <- checkAI commVar
                              send conn commands
                              when aiDone $ putMVar stateVar state
@@ -96,14 +104,16 @@ loop conn stateVar commVar = do
 -- Server init
 ---------------------------
 
+firstFrame :: (Handle, HostName,PortNumber) -> MVar GameState -> MVar [Command] -> IO ()
 firstFrame conn stateVar commVar = do
                                    state  <- receive conn gameState
                                    send conn $ Commands []
                                    putMVar stateVar state
 
+server :: (GameInfo -> AnalysedGameInfo) -> (AnalysedGameInfo -> GameState -> [GameState] -> Maybe b -> ([Command], Maybe b)) -> Socket -> IO ()
 server onStart onFrame socket = do
                                 connection <- accept socket
-                                gameInfo   <- startup connection
+                                (gameInfo,logHandle) <- startup connection
                                 stateVar   <- newEmptyMVar
                                 commVar    <- newEmptyMVar
                                 forkIO $ aiThread stateVar commVar (onStart gameInfo) onFrame
@@ -114,5 +124,5 @@ server onStart onFrame socket = do
 -- Server entry-point
 ---------------------------
 
-run :: (GameInfo -> GameInfo) -> (GameInfo -> GameState -> [GameState] -> Maybe b -> ([Command], Maybe b)) -> IO ()
+run ::  (GameInfo -> AnalysedGameInfo) -> (AnalysedGameInfo -> GameState -> [GameState] -> Maybe b -> ([Command], Maybe b)) -> IO ()
 run onStart onFrame = withSocketsDo $ bracket (listenOn Settings.port) (sClose) (server onStart onFrame)

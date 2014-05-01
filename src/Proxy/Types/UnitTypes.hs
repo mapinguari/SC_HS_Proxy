@@ -231,3 +231,4 @@ data UnitType = TerranMarine
               | VespeneTank2
               | NoneUnitType
               | UnknownUnitType deriving (Enum, Show, Eq)
+

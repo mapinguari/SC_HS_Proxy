@@ -73,9 +73,9 @@ instance Show PlayerInfo where
   show pI = playerName pI ++ "-" ++ (show.playerRace) pI ++ "-" ++ (show.playerType) pI
 
 -- | DataTypes for each of the types of other players
-data Player = Me PlayerInfo
-            | Ally PlayerInfo
-            | Enemy PlayerInfo deriving Show
+data Player = Me {playerInfo :: PlayerInfo}
+            | Ally {playerInfo :: PlayerInfo}
+            | Enemy {playerInfo :: PlayerInfo} deriving Show
 
 -- | Map information, name, dimensions and a list of areas,
 data MapData = MapData {mapName :: String, 
@@ -146,3 +146,22 @@ instance Enum UpgradeStatus where
     fromEnum (ResearchingUpgrade) = 4
     fromEnum (UpgradeResearched level) = level
 
+data Pixel = P {x,y::Int}
+           deriving (Show,Eq)
+newtype WTile = WT Position
+              deriving (Show,Eq)
+newtype BTile = BT Position
+              deriving (Show,Eq)
+type Position = (Int,Int)
+
+locationToPixel :: Location -> Pixel
+locationToPixel (x,y) = P x y
+
+pixelToLocation :: Pixel -> Location 
+pixelToLocation (P x y) = (x,y)
+                       
+mpDistance :: (Integral numOfPixels) => Pixel -> Pixel -> numOfPixels
+mpDistance (P x y) (P z w) = fromIntegral $ abs (z - x) + abs (w - y) 
+
+epDistance :: (Floating euclideanD) => Pixel -> Pixel -> euclideanD
+epDistance (P x y) (P z w) = sqrt $ (fromIntegral (z - x))**2 + (fromIntegral(w-y))**2

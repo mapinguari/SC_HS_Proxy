@@ -31,7 +31,7 @@ distance (x1, y1) (x2, y2) = (sqrt (dx**2 + dy**2)) where
     dx = fromIntegral $ x1 - x2
     dy = fromIntegral $ y1 - y2
 
-distanceFrom :: (Floating a) =>UnitData -> UnitData -> a
+distanceFrom :: (Floating a) => UnitData -> UnitData -> a
 distanceFrom u1 u2 = distance (unitLocation u1) (unitLocation u2)
 
 closer :: UnitData -> UnitData -> UnitData -> UnitData
@@ -53,3 +53,10 @@ getUnitsWithOrder = filter . hasOrder
 
 getMinerals :: [UnitData] -> [UnitData]
 getMinerals = filter (isType ResourceMineralPatch1)
+
+myUnit :: [Player] -> UnitData -> Bool
+myUnit xs uD = unitId uD == myId
+  where myId = playerId . playerInfo . head $  filter g xs
+        g x = case x of
+          Me _ -> True
+          otherwise -> False

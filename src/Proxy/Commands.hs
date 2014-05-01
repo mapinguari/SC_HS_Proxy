@@ -11,6 +11,9 @@ import qualified Proxy.Types.CommandTypes as CT
 ---------------------------------------------------------------
 -- | These are all the standard commands that you use
 
+noCommand :: UnitId -> Command
+noCommand iD = atNothing CT.NoneCommand iD
+
 attackMove :: UnitId -> Location -> Command
 attackMove          = atLocation CT.AttackMove
 -- ^ @ attackMove unit place @ This would make the unit @unit@ move to @place@ attacking enemy units enroute
@@ -204,34 +207,34 @@ args4 a b c d = serializes a . s . serializes b . s . serializes c . s $ seriali
 ---------------------------------------------------------------
 
 atLocation                                          :: CT.CommandType -> UnitId -> Location -> Command
-atLocation ct unitId (x, y)                         = Command ct $ args3 unitId x y
+atLocation ct unitId (x, y)                         = Command ct unitId $ args3 unitId x y
 
 atUnit                                              :: CT.CommandType -> UnitId -> UnitId -> Command
-atUnit ct unitId                                    = Command ct . args2 unitId
+atUnit ct unitId                                    = Command ct unitId . args2 unitId
 
 withTechTypeAtUnit                                  :: CT.CommandType -> UnitId -> TechType -> UnitId -> Command
-withTechTypeAtUnit ct unitId techType               = Command ct . args3 unitId techType
+withTechTypeAtUnit ct unitId techType               = Command ct  unitId . args3 unitId techType
 
 atUnitType                                          :: CT.CommandType -> UnitId -> UnitType -> Command
-atUnitType ct unitId                                = Command ct . args2 unitId
+atUnitType ct unitId                                = Command ct  unitId . args2 unitId
 
 atLocationWithUnitType                              :: CT.CommandType -> UnitId -> Location -> UnitType -> Command
-atLocationWithUnitType ct unitId (x, y)             = Command ct . args4 unitId x y
+atLocationWithUnitType ct unitId (x, y)             = Command ct  unitId . args4 unitId x y
 
 withTechTypeAtLocation                              :: CT.CommandType -> UnitId -> TechType -> Location -> Command
-withTechTypeAtLocation ct unitId techType (x, y)    = Command ct $ args4 unitId techType x y
+withTechTypeAtLocation ct unitId techType (x, y)    = Command ct  unitId $ args4 unitId techType x y
 
 atTechType                                          :: CT.CommandType -> UnitId -> TechType -> Command
-atTechType ct unitId                                = Command ct . args2 unitId
+atTechType ct unitId                                = Command ct  unitId . args2 unitId
 
 atUpgradeType                                       :: CT.CommandType -> UnitId -> UpgradeType -> Command
-atUpgradeType ct unitId                             = Command ct . args2 unitId
+atUpgradeType ct unitId                             = Command ct  unitId . args2 unitId
 
 atNothing                                           :: CT.CommandType -> UnitId -> Command
-atNothing ct                                        = Command ct . args1
+atNothing ct unitId                                       = Command ct unitId $ args1 unitId
 
 atSlot                                              :: CT.CommandType -> UnitId -> Slot -> Command
-atSlot ct unitId                                    = Command ct . args2 unitId
+atSlot ct unitId                                    = Command ct  unitId . args2 unitId
 
 setValue                                            :: CT.CommandType -> Int -> Command
-setValue ct                                         = Command ct . args1
+setValue ct unitId                                     = Command ct  unitId $ args1 unitId
