@@ -1,4 +1,4 @@
-module Proxy.Server.Server (run) where
+module Proxy.Server.Server (run,send) where
 import Network
 import System.IO
 import Control.Monad

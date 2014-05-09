@@ -6,7 +6,6 @@ import Proxy.Server.Messages
 import Proxy.Types.Game
 import Proxy.Query.Unit
 import Proxy.Commands
-import Proxy.PreProcessing.PotentialField
 import Proxy.PreProcessing.MapDecomposition
 import Control.Monad.State
 import Proxy.Types.CommandTypes
@@ -25,13 +24,15 @@ instance NFData (Rectangle a) where
 
 data AnalysedGameInfo = AGI { players :: [(Player,Position)], battlefield :: MapData , terrain :: Maybe (ChokeData,BaseData)}
 
-data AIState = Nothing | AI {step :: Int, interval :: (Int -> Int),toDo :: (GameState -> [Command])}
+data AIState = No_Thing | AI {step :: Int, interval :: (Int -> Int),toDo :: (GameState -> [Command])}
 
 onStart :: GameInfo -> AnalysedGameInfo
 onStart (GameInfo p l m t) = deepseq (labNodes.mapToGraph.tiles $ m)  ( AGI (zip p l) m t)
 
 onFrame :: AnalysedGameInfo -> GameState -> [GameState] -> Maybe b -> ([Command], Maybe b)
-onFrame onStartData gameState history aiState = let
+onFrame onStartData gameState history aiState = ([],Nothing)
+  {-
+  let
   bigCalc = deepseq (airAndGroundPotential (tiles.battlefield $ onStartData) (gameUnits gameState)) 1
   pInfo = map fst . players $ onStartData
   myId = playerId.getMyInfo $ pInfo
@@ -63,3 +64,4 @@ onFrame onStartData gameState history aiState = let
                                                 
                                              in (commands, aiState)
 
+-}
