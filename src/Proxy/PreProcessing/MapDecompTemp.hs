@@ -1,70 +1,92 @@
-module Proxy.PreProcessing.MapDecomposition (runLengthEncoding,generalisedDeltaMethod) where
+module Proxy.PreProcessing.MapDecomposition (runLengthEncoding) where
 import Data.List (mapAccumL)
 import Control.Monad.State
 import Data.Maybe (isJust)
 import Proxy.Types.Game
 import Proxy.Math.Rectangle
-import Proxy.Math.Interval
-
+import Proxy.Math.Interval 
+import Data.Array
+import Data.List
+import Debug.Trace
+                
+batCheck n = [[Tile 1 (odd (i+j)) False | i <- [0..(n-1)]]| j <-[0..(n-1)]]
+rectangles h n = [Rectangle (mkInterval i (i+1)) (mkInterval h (h+1)) | i <-[1,3..n]]
 
 type Map = [[Tile]] 
+type MapDecomposition = Map -> [Rectangle Int]
 --------------------------------------------------------------------------------------------
 --for each row Group tiles together if they are adjacent and walkable
-runLengthEncoding :: Map -> [Rectangle]
-runLengthEncoding = concat.mapToRect.map (map walkable)
+runLengthEncoding :: MapDecomposition
+runLengthEncoding = concat . almostRLE
 
-mapToRect :: [[Bool]] -> [[Rectangle]]
-mapToRect = snd.(mapAccumL (\n xs -> (n+1, rowToRect n xs)) 1)
---mutually recursive function
-rowToRect :: Int -> [Bool] -> [Rectangle]
-rowToRect row xs = rmObstacle 1 xs
-  where rmObstacle _ [] = []
-        rmObstacle n ys = 
-          let blockSize = length obstacle 
-              obstacle = takeWhile (not.id) ys 
-              rest = dropWhile (not.id) ys
-          in getRect (n+blockSize) rest
-        getRect _ [] = []
-        getRect n ys = 
-          let rectWidth = length rect
-              rest = dropWhile id ys 
-              rect = takeWhile id ys 
-          in Rectangle (mkInterval (row - 1) row) (mkInterval (n - 1) (n-1+rectWidth)) : rmObstacle (n+rectWidth) rest
-----------------------------------------------------------------------------
-----------------------If two rectangles are above one another and have the same horizontal bounds, group them into one rectangle.
-generalisedDeltaMethod :: Map -> [Rectangle]
-generalisedDeltaMethod = concat.gDM.mapToRect.map (map walkable)
+almostRLE :: [[Tile]] -> [[Rectangle Int]]
+almostRLE = snd . mapAccumL g 0 
+  where g n xs = (n+1, map f . listOfRuns . map walkable $ xs)
+          where f = \(x1,x2) -> Rectangle (mkInterval x1 x2) (mkInterval n (n+1))
+ 
+listOfRuns :: [Bool] -> [(Int,Int)]
+listOfRuns xs = lR 0 xs 
+  where lR _ [] = []
+        lR n xs | null ts = lR (n+1) (tail fs)
+                | otherwise = (n,e) : lR e fs
+          where e = n + (length ts)
+                (ts,fs) = span id xs
 
-gDM :: [[Rectangle]] -> [[Rectangle]]
-gDM (xs:[]) = [xs]
-gDM (xs:ys:xss) = zs: gDM (ws:xss)
-  where (zs,ws) = rowMerge xs ys
+
+-------------------------------------------------------------------------------------------------
+  
+mergeX :: (Real a) => Rectangle a -> Rectangle a -> Maybe (Rectangle a)
+mergeX a b = let x = piX a in 
+  if x == piX b  
+  then iUnion (piY a) (piY b) >>= (\y -> Just (Rectangle x y))
+  else Nothing
+
+generalizedDelta :: MapDecomposition 
+generalizedDelta = rectsMerge . runLengthEncoding 
+
+rectMerge :: (Real a) => Rectangle a -> [Rectangle a] -> (Rectangle a , [Rectangle a])
+rectMerge r [] = (r,[])
+rectMerge r (s:ts) = case mergeX r s of
+  Nothing -> let (f,rest) = rectMerge r ts in (f,s:rest)
+  Just n -> let (f,rest) = rectMerge n ts in (f,rest)
+  
+rectsMerge :: (Real a) => [Rectangle a] -> [Rectangle a]
+rectsMerge [] = [] 
+rectsMerge (r:rs) = nr : rectsMerge stillToGo
+  where (nr,stillToGo) = rectMerge r rs
+
+gd :: MapDecomposition
+gd =  together . almostRLE
+
+lgd :: MapDecomposition
+lgd = together' . almostRLE
+
+together :: (Real a) => [[Rectangle a]] -> [Rectangle a]
+together ts = concat (mergeAndGather [] ts)
+  where mergeAndGather as [] = [as]
+        mergeAndGather as (bs:tss) = let (a,b) = listMerge bs as in 
+          b : mergeAndGather a tss
+          
+together' :: (Real a) => [[Rectangle a]] -> [Rectangle a] 
+together' ts = concat (ttt [] ts)
+  where ttt as [] = [as]
+        ttt as (bs:tss) = let (a,b) = linearListMerge bs as in 
+          (b : ttt a tss)
         
-rowMerge :: [Rectangle] -> [Rectangle] -> ([Rectangle],[Rectangle])
-rowMerge xs [] = (xs,[])
-rowMerge [] ys = ([],ys)
-rowMerge (x:xs) (y:ys) 
-  | (inf.piY) x > (sup.piY) y = (us,y:vs)
-  | (inf.piY) y > (sup.piY) x = (x:zs,ws)
-  | piY y == piY x = case merge y x of 
-    Nothing -> (as,bs)
-    Just a -> (as,a:bs)
-  | otherwise = (x:as,y:bs)
-  where (us,vs) = rowMerge (x:xs) ys
-        (zs,ws) = rowMerge xs (y:ys)
-        (as,bs) = rowMerge xs ys
-
---Assuming that r s are disjoint
-merge :: Rectangle -> Rectangle -> Maybe Rectangle
-merge r s 
-  | isJust $ ry `intersection` sy = case (unionI rx sx,intersection ry sy) of
-    (Just a, Just b) -> Just $ Rectangle a b
-    otherwise -> Nothing
-  | isJust $ rx `intersection` sx  = case (intersection rx sx,unionI ry sy) of
-    (Just a, Just b) -> Just $ Rectangle a b
-    otherwise -> Nothing
-  | otherwise = Nothing
-  where rx = piX r
-        ry = piY r
-        sx = piX s
-        sy = piY s
+listMerge :: (Real a) => [Rectangle a] -> [Rectangle a] -> ([Rectangle a],[Rectangle a])
+listMerge [] os = ([],os)
+listMerge ns [] = (ns,[])
+listMerge (n:ns) os = (r:a,b)
+  where (r,left) = rectMerge n os
+        (a,b) = listMerge ns left
+        
+linearListMerge :: (Real a) => [Rectangle a] -> [Rectangle a] -> ([Rectangle a], [Rectangle a]) 
+linearListMerge [] xs = ([],xs)
+linearListMerge xs [] = (xs,[])
+linearListMerge (x:xs) (y:ys) 
+  | x `isLessAdvancedThan` y = let (ns,os) = linearListMerge xs (y:ys) in (x:ns,os)
+  | y `isLessAdvancedThan` x = let (ns,os) = linearListMerge (x:xs) ys in (ns,y:os)
+  | otherwise = let (ns,os) = linearListMerge xs ys in (maybeCons (mergeX x y) ns,os)
+  where isLessAdvancedThan r s = (inf.piX $ r) < (inf.piX $ s)
+        maybeCons Nothing xs = xs
+        maybeCons (Just a) xs = a:xs

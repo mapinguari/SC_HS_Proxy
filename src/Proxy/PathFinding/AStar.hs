@@ -34,6 +34,3 @@ strip (LP x) = x
 shortestPath :: (Graph gr, Num b, Ord b) => Heuristic a b -> gr a b -> Node -> GoalTest -> Path
 shortestPath h graph origin goalTest = reverse.(map fst).strip.(first (\(LP ((n,_):_)) -> goalTest n)) $ aStar_ter h graph origin
 
-complete :: Int -> Gr Int Int 
-complete n = mkGraph [(i,1)| i <- [1..n]] [(i,i+1,1)| i <- [1..n]]
-
