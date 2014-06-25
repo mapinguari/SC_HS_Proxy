@@ -2,6 +2,9 @@ module Proxy.Math.Rectangle where
 import Data.Ord
 import Proxy.Math.Interval
 import Proxy.Math.Line
+import Data.List
+import Data.Maybe
+import Data.Function
 
 data Rectangle a = Rectangle {xI,yI :: (Interval a)} 
                  deriving (Show,Eq)
@@ -67,3 +70,26 @@ rectangleI r s = do
   xInterval <- trivialIntersection (xI r) (xI s) 
   yInterval <- trivialIntersection (yI r) (yI s)
   return (Rectangle xInterval yInterval)
+  
+isLine :: (Eq a) => Rectangle a -> Bool
+isLine r = trivial (piX r) || trivial (piY r)
+  
+commonEdge :: (Real a) => Rectangle a -> Rectangle a -> Maybe LineSeg
+commonEdge r s = do 
+  inter <- rectangleI r s
+  if isLine inter 
+    then return (mkLineSegment (vertex 0 r) (vertex 3 r))
+    else Nothing
+  
+rDist :: (Real a) => Rectangle a -> Rectangle a -> a
+rDist r s =  iDist (xI r) (xI s) + iDist (piY r) (piY s) 
+
+centersDistance :: (Real a,Floating b) => Rectangle a -> Rectangle a -> b
+centersDistance r s = case cedge >>= (lineSegIntersect direct) of
+  Nothing -> distance closestPoint (center r) + distance closestPoint (center s)
+  Just (Left a) -> lineSegLength direct
+  otherwise -> error "Intersection of rectangles error"
+  where direct = mkLineSegment (center r) (center s)
+        cedge = commonEdge r s
+        closestPoint = minimumBy (compare `on` (pointToLineDistance (lineEq direct))) (catMaybes [cedge >>= (return.mapPoint fromRational.start) , cedge >>= (return.mapPoint fromRational.end)])
+        

@@ -1,4 +1,4 @@
-module Proxy.Math.Line (Point,x,y,mkPoint,mkPointxFirst,mkPointyFirst,distance,Line,xCo,yCo,cCo,mkLine,invarientX,invarientY,xVal,yVal, lineIntersect, onLine,LineSeg,lineEq,start,end,lineSegLength,mkLineSegment,lineSegIntersect,onLineSeg) where 
+module Proxy.Math.Line (Point,x,y,mkPoint, mapPoint,mkPointxFirst,mkPointyFirst,distance,Line,xCo,yCo,cCo,mkLine,invarientX,invarientY,xVal,yVal, lineIntersect, onLine,LineSeg,lineEq,start,end,lineSegLength,mkLineSegment,lineSegIntersect,onLineSeg,pointToLineDistance) where 
 import Proxy.Math.Interval
 import GHC.Real
 
@@ -6,6 +6,9 @@ import GHC.Real
 ----------------Point -------------------------
 data Point a = P {x,y :: a}
                   deriving (Show,Eq)
+                           
+mapPoint :: (a -> b) -> Point a -> Point b
+mapPoint f p = P (f (x p)) (f (y p))
 
 mkPoint :: a -> a -> Point a
 mkPoint = mkPointxFirst 
@@ -89,6 +92,12 @@ onLine p (L a b c) = a'*(x p) + b'*(y p) + c' == 0
   where  a' = fromIntegral a
          b' = fromIntegral b
          c' = fromIntegral c
+         
+pointToLineDistance ::(Floating a) => Line -> Point a -> a
+pointToLineDistance l p = (abs ((x p * a) + (y p * b) + c)) / (sqrt  $ (a^2) + (b^2))
+ where a = fromIntegral (xCo l) 
+       b = fromIntegral (yCo l)
+       c = fromIntegral (cCo l) 
            
 --------------------------LineSeg----------------------
           

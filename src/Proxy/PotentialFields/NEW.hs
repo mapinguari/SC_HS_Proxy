@@ -84,20 +84,24 @@ cross :: [(Int,Int)] -> [(Int,Int)] -> [Bounds]
 cross [] _ = []
 cross (x:xs) ys = foldr f [] ys ++ cross xs ys
   where f y xs = interToDiags x y : xs
-        
-data QuadTree a = Empty | Leaf a | Branch {bl,br,tl,tr ::(QuadTree a)} 
-
-quadtree :: ((Int,Int) -> Bool) -> Bounds -> QuadTree Bounds
-quadtree f b = case same b of
-  True -> Leaf b 
-  False -> mkTree b 
-  where same b = all (== f h) (map f bs)
-        (h:bs) = range b
-        mkTree :: Bounds -> QuadTree Bounds
-        mkTree ((a,c),(b,d)) 
-          | b - a == 0 = Branch (quadtree f ((a,c),(b,my))) Empty (quadtree f ((a,my+1),(b,d))) Empty 
-          | d - c == 0 = Branch (quadtree f ((a,c),(mx,d))) (quadtree f ((mx+1,c),(b,d))) Empty Empty
-          | otherwise = Branch (quadtree f ((a,c),(mx,my))) (quadtree f ((mx+1,c),(b,my))) (quadtree f ((a,my+1),(mx,d))) (quadtree f ((mx+1,my+1),(b,d))) 
-          where mx = split a b
-                my = split c d
                       
+test :: [[Tile]] -> Node -> [Node]
+test ts = adjacents (0,size) (!b)
+  where b = listArray (0,size) . map walkable . concat $ ts
+        size = (length ts - 1) * ((length.head $ ts) - 1)
+        
+h :: (Ix a,Num a) => (a,a) -> (a,a) -> [(a,a)]
+h (v,w) = filter (inbounds) . mk
+  where inbounds = inRange ((0,0),(v-1,w-1))
+        mk (x,y) = [(x,y+1),(x-1,y),(x+1,y),(x,y-1)]
+f' :: (Integral a) => (a,a) -> a -> (a,a)
+f' (_,w) n = (n `rem` w, n `div` w)
+
+f :: (Num a) => (a,a) -> (a,a) -> a
+f (_,w) (x,y) = x + y * w
+
+g :: (Ix a,Integral a) => (a,a) -> a -> [a]
+g b = map (f b) . h b . f' b
+
+adjacents :: (Ix a,Integral a) => (a,a) -> (a -> Bool) -> a -> [a]
+adjacents b m = filter m . g b 

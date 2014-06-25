@@ -6,15 +6,14 @@ import Control.Exception
 import Control.Concurrent
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
-import qualified Proxy.Settings as Settings
+import qualified Settings 
 import Proxy.Server.Messages
-import Proxy.Commands
 import Proxy.Server.Parsers
 import System.Time
 import Proxy.Server.Log
+import Proxy.AI.AIControl
+
 import Text.Parsec.String (Parser)
-import Proxy.AIFunctions (AnalysedGameInfo)
-import Proxy.Types.Game
 import Data.Char
 
 botOptions :: Options
@@ -70,15 +69,6 @@ startup connection@(_,host,_) = do
 -- AI Synchronization
 ---------------------------
 
-aiThread :: MVar GameState -> MVar [Command] -> AnalysedGameInfo -> (AnalysedGameInfo -> GameState -> [GameState] -> Maybe a -> ([Command],Maybe a)) -> IO ()
-aiThread stateVar commVar onStartData onFrame = aiLoop [] Nothing where
-    aiLoop history aiState = do
-                             gameState <- takeMVar stateVar
-                             let (commands, newAIState) = onFrame onStartData gameState history aiState
-                             putMVar commVar commands
-                             let newHistory = history `seq` (take Settings.historyLength (gameState : history))
-                             aiLoop newHistory newAIState
-                             
 checkAI :: MVar [Command] -> IO (Bool,Commands)
 checkAI commVar = do
                   commVal <- tryTakeMVar commVar
@@ -110,7 +100,7 @@ firstFrame conn stateVar commVar = do
                                    send conn $ Commands []
                                    putMVar stateVar state
 
-server :: (GameInfo -> AnalysedGameInfo) -> (AnalysedGameInfo -> GameState -> [GameState] -> Maybe b -> ([Command], Maybe b)) -> Socket -> IO ()
+server :: StartCalculation -> FrameCalculation a -> Socket -> IO ()
 server onStart onFrame socket = do
                                 connection <- accept socket
                                 (gameInfo,logHandle) <- startup connection
@@ -124,5 +114,5 @@ server onStart onFrame socket = do
 -- Server entry-point
 ---------------------------
 
-run ::  (GameInfo -> AnalysedGameInfo) -> (AnalysedGameInfo -> GameState -> [GameState] -> Maybe b -> ([Command], Maybe b)) -> IO ()
+run ::  StartCalculation -> FrameCalculation -> IO ()
 run onStart onFrame = withSocketsDo $ bracket (listenOn Settings.port) (sClose) (server onStart onFrame)

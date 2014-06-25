@@ -3,7 +3,7 @@ import System.Time
 import System.IO
 import Proxy.Types.Game
 import Proxy.Server.Messages
-import Proxy.Settings
+import Settings
 
 startLog :: GameInfo -> Options -> CalendarTime -> IO Handle
 startLog gI bs t = do 

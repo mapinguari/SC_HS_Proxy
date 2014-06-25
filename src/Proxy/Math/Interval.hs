@@ -1,4 +1,4 @@
-module Proxy.Math.Interval (Interval,mkInterval, ilength, sup,inf,midpoint,trivial,isIn,intersection,trivialIntersection,interIntervalDistance,iUnion) where
+module Proxy.Math.Interval (Interval,mkInterval, ilength, sup,inf,midpoint,trivial,isIn,intersection,trivialIntersection,interIntervalDistance,iUnion,iDist) where
 
 newtype Interval a = I (a,a)
                    deriving (Show,Eq)
@@ -41,9 +41,11 @@ interIntervalDistance i1 i2
   | ( sup i1 `isIn` i2) || ( inf i1 `isIn` i2 ) = 0
   | sup i1 < inf i2 = inf i2 - sup i1
   | sup i2 < inf i1 = inf i1 - sup i2
+                      
+iDist :: (Real a) => Interval a -> Interval a -> a
+iDist = interIntervalDistance
 
 iUnion :: (Real a) => Interval a -> Interval a -> Maybe (Interval a)
 iUnion i1 i2 = case trivialIntersection i1 i2 of
   Just a -> Just ( I (min (inf i1) (inf i2), max (sup i1) (sup i2)))
   otherwise -> Nothing
-
