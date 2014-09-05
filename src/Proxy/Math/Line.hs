@@ -5,7 +5,7 @@ import GHC.Real
 
 ----------------Point -------------------------
 data Point a = P {x,y :: a}
-                  deriving (Show,Eq)
+                  deriving (Show,Eq,Ord)
                            
 mapPoint :: (a -> b) -> Point a -> Point b
 mapPoint f p = P (f (x p)) (f (y p))

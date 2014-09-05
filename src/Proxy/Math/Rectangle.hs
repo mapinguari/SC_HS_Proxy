@@ -9,6 +9,12 @@ import Data.Function
 data Rectangle a = Rectangle {xI,yI :: (Interval a)} 
                  deriving (Show,Eq)
 
+instance (Ord b) => Ord (Rectangle b) where
+  (<=) r s = vertex 0 r <= vertex 0 s
+  
+transposeR :: Rectangle a -> Rectangle a
+transposeR (Rectangle x y) = Rectangle y x
+
 piX :: Rectangle a -> Interval a
 piX = xI
 
@@ -27,7 +33,7 @@ area = (\r -> width r * height r)
 center :: (Real a,Fractional b) => Rectangle a -> Point b
 center r = mkPoint (midpoint.xI $ r) (midpoint.yI $ r)
 
-vertex :: (Real a,Integral b) => b -> Rectangle a -> Point a
+vertex :: (Integral b) => b -> Rectangle a -> Point a
 vertex n r = case n `mod` 4 of
   0 -> mkPointxFirst (inf.xI $ r) (inf.yI $ r)
   1 -> mkPointxFirst (inf.xI $ r) (sup.yI $ r)
@@ -39,6 +45,9 @@ edge n r = mkLineSegment (vertex n r) (vertex (n+1) r)
 
 isInRect :: (Real a, Real b) => Point a -> Rectangle b -> Bool
 isInRect p r = x p `isIn` xI r && y p `isIn` yI r
+
+iIR :: (Real a) => (a,a) -> Rectangle a -> Bool
+iIR (x,y) r = (x + 1) `isIn` xI r && (y + 1)  `isIn` yI r
 
 areaCompare :: (Real a) => Rectangle a -> Rectangle a -> Ordering
 areaCompare = comparing area 

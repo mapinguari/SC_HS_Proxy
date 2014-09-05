@@ -1,4 +1,4 @@
-module Proxy.Commands where
+module Proxy.Command.Commands where
 import Proxy.Types.Game
 import Proxy.Server.Messages
 import Proxy.Types.UnitTypes

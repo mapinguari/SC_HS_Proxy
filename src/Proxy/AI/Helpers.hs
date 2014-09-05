@@ -1,4 +1,4 @@
-module Proxy.Helpers where
+module Proxy.AI.Helpers where
 import Proxy.Types.Game
 import Proxy.Server.Messages
 import qualified Proxy.Types.Orders as Orders
@@ -61,12 +61,16 @@ myUnit xs uD = unitId uD == myId
         g x = case x of
           Me _ -> True
           otherwise -> False
-          
+{-          
 posOfUnit :: UnitData -> [Position]
 posOfUnit ud = range (bL ud, tR . bL $ ud) 
   where bL = locToPos . unitLocation
         tR (x,y) = (x + (Unit.tileWidth . unitType $ ud),  y + (Unit.tileHeight . unitType $ ud))
         
+
+
+
+
 locToPos :: Location -> Position 
 locToPos (x,y) = (x `div` 8, y `div` 8)
 
@@ -83,4 +87,4 @@ mapToGraph ud tss = buildGraph (h*w) . map (posToNode *** posToNode) . filter va
                 mk (x,y) = [(x,y+1),(x-1,y),(x+1,y),(x,y-1)]
         validEdge (x,y) = trav ! x && trav ! y
         trav = accumArray (&&) True ((0,0),(w,h)) (zip (concatMap posOfUnit ud) (repeat False) ++ zip [(i,j)| j <- [0..h], i <- [0..w]] (map (walkable) . concat $ tss))
-        
+       -}

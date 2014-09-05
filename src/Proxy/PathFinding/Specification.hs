@@ -3,9 +3,9 @@ import Proxy.Math.Graph
 import Data.Function
 import Data.Monoid
 import Control.Monad
-import Data.Sequence as Seq hiding (filter,partition,zip,length,sortBy,null, reverse)
+import Data.Sequence as Seq hiding (filter,partition,zip,length,sortBy, reverse)
 import Data.Foldable hiding (concatMap,concat,elem,all,foldl,any)
-import Data.List (partition, sortBy)                   
+import Data.List (partition, sortBy,nub)                   
 import Control.Monad.State
 import Data.Array
 import Data.Maybe
@@ -27,6 +27,10 @@ class PathLike p where
   safeDestination p = case destination p of
     Nothing -> error "No Destination"
     Just d -> d
+  safeOrigin :: p -> Node
+  safeOrigin p = case origin p of
+    Nothing -> error "No Origin"
+    Just o -> o
   
 instance PathLike Path where 
   destination p = case viewr.rep $ p of
@@ -44,6 +48,12 @@ instance Show Path where
 
 mkPath :: [Node] -> Path
 mkPath = Path . fromList
+
+pathNull :: Path -> Bool
+pathNull = Seq.null . rep
+
+dropOrigin :: Path -> Path
+dropOrigin = Path . Seq.drop 1 . rep
 
 advance :: Path -> Node -> Path
 advance p = Path . ((rep p) |>)
@@ -74,7 +84,7 @@ instance PathLike (WeightedPath a) where
   origin = origin . wpPath
   completePath = completePath.wpPath 
   
-pathFrom :: (WeightedGraph g, Num b) => g a b -> Node -> WeightedPath b -> WeightedPath b 
+pathFrom :: (WeightedGraph g b) => g a b -> Node -> WeightedPath b -> WeightedPath b 
 pathFrom g n wp = WP {wpWeight = wpWeight wp - pc g prefix,
                       wpPath = Path suffix}
   where prefix = Path $ pre |> n
@@ -116,7 +126,7 @@ class PathState ps where
 instance PathState ListsPathState where
   mkPS ns wps = LPS (ns,wps)
   nodesVisited = fst.internal
-  noPathsLeft = null.snd.internal
+  noPathsLeft = Prelude.null . snd . internal
   remainingPaths = snd.internal
   updatePathsToConsider h (LPS (ms,xs)) = LPS (ms ,pigeonholeSort heuristic . strip . elems . accumArray (<>) Empty (minAndMax (map fst paths)) $ (zip ms (repeat Complete) ++ paths))
     where paths = map g xs
@@ -155,6 +165,7 @@ minAndMax [] = error "minAndMax : empty list"
 minAndMax (x:xs) = foldl f (x,x) xs
   where f (a,b) x = (min x a, max x b)
         
+
 mergeOn :: (Ord b) => (a -> b) -> [a] -> [a] -> [a]
 mergeOn _ [] xs = xs
 mergeOn _ xs [] = xs
@@ -162,8 +173,13 @@ mergeOn f (x:xs) (y:ys)
   | f x <= f y = x : mergeOn f xs (y:ys)
   | otherwise = y : mergeOn f (x:xs) ys
 
-        
 
+sp1 :: (WeightedGraph g b) => g a b -> Node -> Node -> Maybe Path
+sp1 g n1 n2 = find atDestination (build [mkPath [n1]])
+  where atDestination = maybe False (== n2) . destination
+        build [] = [] 
+        build (x:xs) = x : build (mergeOn (pc g) (newPaths x) xs)
+        newPaths = (\p -> sortBy (compare `on` (pc g)) (filter loopless (map (advance p) (adjacents g (safeDestination p)))))
 
 -------------------------------------------------------------------------------------------ACCURATE BUT INEFFICIENT--------------------------------------
 sp'' g n1 n2 = minimumBy (compare `on` (pc g)) (filter (pathFromTo n1 n2) ( validPaths g))
@@ -183,7 +199,7 @@ isPath :: (Graph g) => g a b -> Path -> Bool
 isPath g p = all (uncurry (arc g)) $ zip xs (tail xs)
  where xs = completePath p
 
-pc :: (WeightedGraph g, Num b) => g a b -> Path -> b
+pc :: (WeightedGraph g b) => g a b -> Path -> b
 pc g = foldl f 0 . edges
   where f n = (+) n . (weight g) 
         
@@ -197,6 +213,9 @@ pathFromTo n1 n2 p = case a of
           d <- destination p
           return (o == n1 && d == n2)
           
+loopless :: Path -> Bool
+loopless p = completePath p == (nub . completePath $ p)
+
           
           
 {-

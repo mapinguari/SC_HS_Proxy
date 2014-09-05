@@ -42,8 +42,6 @@ newPath g =  do
   modify (updatePathsToConsider (const 0))
   return p
 
-
-
 spAStar :: (Num b, Ix b, WeightedGraph g) => g a b -> Heuristic b -> Node -> Node -> Maybe (WeightedPath b)
 spAStar g h n1 n2 = first atDestination $ aStar g n1 h
   where atDestination = maybe False (== n2) . destination
@@ -70,13 +68,15 @@ newPath' g h = do
   modify (updatePathsToConsider h)
   return p
 
+type VisitedNodes b = [(Node,b)]
 
-
-spAAStar :: (Num b, Ix b, WeightedGraph g) => g a b -> [WeightedPath b] -> WeightedPath b -> Heuristic b -> Node -> Maybe (WeightedPath b)
-spAAStar g cn p h n = first (flip isOnPath p . safeDestination) (aStar g n eH) >>= return.(\ s -> s <> pathFrom g (safeDestination s) p)
- where eH = (heurMap!)
-       heurMap = accumArray second 0 (0,size g - 1) ([(i, h i) | i <- nodes g] ++ [(safeDestination q, wpWeight p - wpWeight q) | q <- cn ])       
+aAStar :: (Num b, Ix b, WeightedGraph g) => g a b -> Node -> VisitedNodes b -> WeightedPath b -> Heuristic b -> [WeightedPath b]
+aAStar g currentLoc vs oldPath oldHeur = map appendToGoal (aStar g currentLoc (newHeur!)) 
+ where newHeur = accumArray second 0 (0,size g - 1) ([(i, oldHeur i) | i <- nodes g] ++ [(closedNode, (wpWeight oldPath) - pathCost) | (closedNode,pathCost) <- vs ]) 
        second _ x = x
+       appendToGoal wp = if isOnPath (safeDestination wp) oldPath
+                         then wp <> pathFrom g (safeDestination wp) oldPath
+                         else wp
 
           
 floodfill :: (Node -> [Node]) -> (Node -> Bool) -> Node -> [Node]
@@ -86,4 +86,6 @@ floodfill f t n = ff [n]
                      if null nexts 
                      then visited
                      else ff (nexts ++ visited)
+
+
 

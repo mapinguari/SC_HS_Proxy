@@ -12,9 +12,13 @@ import Proxy.Server.Parsers
 import System.Time
 import Proxy.Server.Log
 import Proxy.AI.AIControl
+import Proxy.Server.MapExtractor
 
 import Text.Parsec.String (Parser)
 import Data.Char
+
+mapsDir :: FilePath
+mapsDir = "/home/mapinguari/Project/MapData/"
 
 botOptions :: Options
 botOptions = Options [Settings.allowUserControl,
@@ -62,6 +66,7 @@ startup connection@(_,host,_) = do
                      terrainData <- receiveTerrain connection
                      let gameInfo = GameInfo players startingLocations maping terrainData
                      time <- toCalendarTime =<< getClockTime
+                     extractMapTo mapsDir gameInfo
                      logHandle <- startLog gameInfo botOptions time
                      return (gameInfo,logHandle)
                      
@@ -114,5 +119,5 @@ server onStart onFrame socket = do
 -- Server entry-point
 ---------------------------
 
-run ::  StartCalculation -> FrameCalculation -> IO ()
+run ::  StartCalculation -> FrameCalculation a -> IO ()
 run onStart onFrame = withSocketsDo $ bracket (listenOn Settings.port) (sClose) (server onStart onFrame)

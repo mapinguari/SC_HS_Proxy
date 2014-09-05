@@ -3,7 +3,7 @@ import Control.Concurrent.MVar
 import Proxy.Server.Messages
 import Settings
 
-type FrameCalculation aiState = (GameInfo -> GameState -> [GameState] -> Maybe aiState -> ([Command],Maybe aiState))
+type FrameCalculation aiState = GameInfo -> GameState -> [GameState] -> Maybe aiState -> ([Command],Maybe aiState)
 type StartCalculation = GameInfo -> GameInfo
 
 

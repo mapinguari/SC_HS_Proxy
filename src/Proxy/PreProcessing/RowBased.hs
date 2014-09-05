@@ -1,4 +1,4 @@
-module Proxy.PreProcessing.RowBased (runLengthEncoding) where
+module Proxy.PreProcessing.RowBased (runLengthEncoding,helper) where
 import Data.List (mapAccumL)
 import Control.Monad.State
 import Data.Maybe (isJust)
@@ -11,6 +11,9 @@ import Data.List
                 
 batCheck n = [[Tile 1 (odd (i+j)) False | i <- [0..(n-1)]]| j <-[0..(n-1)]]
 rectangles h n = [Rectangle (mkInterval i (i+1)) (mkInterval h (h+1)) | i <-[1,3..n]]
+
+helper :: Rectangle Int -> ((Double,Double),(Double,Double))
+helper (Rectangle (I (x1,x2)) (I (y1,y2))) = ((fromIntegral x1,fromIntegral x2),(fromIntegral y1,fromIntegral y2))
 
 type Map = [[Tile]] 
 type MapDecomposition = Map -> [Rectangle Int]

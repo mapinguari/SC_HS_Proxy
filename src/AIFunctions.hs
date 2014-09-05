@@ -1,8 +1,50 @@
-module AIFunctions (onStart, onFrame) where
+module AIFunctions (onStart, onFrame,potFieldAllAttack) where
 import Proxy.AI.AIControl
+import Proxy.PotentialFields.Internal.SimpleActions
+import Proxy.AI.Helpers
+import Proxy.Server.Messages
+import Proxy.Types.Game
+import Proxy.Types.Orders
+import Data.List
+import Debug.Trace
+import qualified Data.Map as M
 
 onStart :: StartCalculation
 onStart = id
+
+
+potFieldAllAttack :: FrameCalculation (M.Map UnitId [Location])
+potFieldAllAttack gi gs his state = (allAttack, newState)
+  where allAttack = allActions unitActions fieldE
+        unitActions = map (flip attackTowards (unitLocation . head $ enemyUnits)) myFreeUnits
+        myFreeUnits = getUnitsWithOrder PlayerGuard myUnits
+        obstacles = getMap . tiles . gameMap $ gi
+        me = getMe . gamePlayers $ gi
+        myId = playerId . playerInfo . getMe . gamePlayers $ gi
+        allUnits = gameUnits gs
+        (myUnits,enemyUnits) = partition ((==myId).unitOwnerId) allUnits
+        fieldE = (obstacles, myUnits, enemyUnits)
+        newState = addLocations gs state
+        
+getMap :: [[Tile]] -> [Location]
+getMap = (\x -> mapPerimeter x ++ getObstacles x)
+        
+mapPerimeter :: [[Tile]] -> [Location]
+mapPerimeter xss = zip (repeat (negate 1)) [-1..h] ++ zip (repeat w) [-1..h] ++ zip [0..(w-1)] (repeat (negate 1)) ++ zip [0..(w-1)] (repeat h)
+  where h = length xss
+        w = length.head $ xss
+        
+getObstacles :: [[Tile]] -> [Location]
+getObstacles xss = [(i,j)| (j,xs) <- zip [0..] xss, (i,x) <- zip [0..] xs, walkable x]
+
+
+addLocations :: GameState -> Maybe (M.Map UnitId [Location]) -> Maybe (M.Map UnitId [Location])
+addLocations gs Nothing = Just $ M.fromList luids
+  where luids = map (\ud -> (unitId ud,[unitLocation ud])) . gameUnits $ gs
+addLocations gs (Just m) = Just $ foldr (\(uid,l) m0 -> M.adjust (l :) uid m0) m luids
+  where luids = map (\ud -> (unitId ud,unitLocation ud)) . gameUnits $ gs
+
+  
 
 onFrame :: FrameCalculation a
 onFrame onStartData gameState history aiState = ([],Nothing)

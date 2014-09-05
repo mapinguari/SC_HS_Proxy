@@ -1,31 +1,95 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Proxy.PreProcessing.GraphConstructors where 
 import Proxy.Math.Rectangle
+import Proxy.Math.Interval
 import Proxy.Math.Graph
 import Data.Array
 import Data.List
+import qualified Data.Map as M
+import Debug.Trace
+import Proxy.PathFinding.HinzAStar
+import Proxy.PathFinding.Specification
 
-validSuffix :: (LabelledGraph g) => g Bool b -> Path -> Path 
-validSuffix g p
+
+rPathFind :: (LabelledGraph g (Rectangle Int), WeightedGraph g Float) => g (Rectangle Int) Float -> (Int,Int) -> (Int,Int) -> Heuristic Float -> Maybe [Rectangle Int]
+rPathFind g o d h = do
+  n <- nodeOf o
+  m <- nodeOf d
+  path <- aStarSearch g n m h 
+  return (map (label g) (completePath path))
+  where nodeOf x = findIndex (x `iIR`) (allLabels g)
+
+data Decomposition n = DD {recLookup :: M.Map Int (Rectangle n), nodeLookup :: M.Map (Rectangle n) Int}
+
+data AdjR = FourWay | EightWay
+
+adjacentTiles :: AdjR -> ((Int,Int) -> [(Int,Int)])
+adjacentTiles FourWay = (\ (x,y) -> [(x-1,y),(x+1,y), (x,y+1), (x,y-1)])
+adjacentTiles EightWay = (\ (x,y) -> filter (/= (x,y)) (range ((x-1,y-1),(x+1,y+1))))
+
+                          
+transferRect :: (Real a) => Rectangle a -> Rectangle a -> Rectangle a 
+transferRect r s = case piX r `intersection` piX s of
+  Nothing -> transposeR $ transferRect (transposeR r) (transposeR s) 
+  Just xtr -> Rectangle xtr (mkInterval (sup ytr) (sup ytr - 1))
+  where (Just ytr) = piY r `trivialIntersection` piY s
+
+                     
+rectiLPath :: AdjR -> (Int,Int) -> (Int,Int) -> [Rectangle Int] -> [(Int,Int)]
+rectiLPath _ _ _ [] = error "rectiLPath : no Path can exist"
+rectiLPath ar a b [r] = if a `iIR` r && b `iIR` r
+                     then approach ar a b
+                     else error "rectiLPath : source and destination not in remaining Rect"
+rectiLPath ar a b (r:s:rs) = trace (show a) $ if a `iIR` r 
+                                         then  (init intraPath) ++ (init interPath) ++  rectiLPath ar exit b (s:rs)
+                                         else error "rectiLPath : origin not in rectangle"
+  where intraPath = pathToRect ar a (transferRect r s)
+        temp = last intraPath
+        interPath = pathToRect ar temp s
+        exit = last interPath 
+        
+        
+
+
+pathToRect :: AdjR -> (Int,Int) -> Rectangle Int -> [(Int,Int)]
+pathToRect ar (n,m) r = approach ar (n,m) closestInRect
+  where closestInRect = (closestInInterval n (piX r),closestInInterval m (piY r))
+
+
+approach :: AdjR -> (Int,Int) -> (Int,Int) -> [(Int,Int)]
+approach EightWay (x,y) (z,w) =  (takeWhile g $ zip ([x..z] ++ repeat z) ([y..w] ++ repeat w)) ++ [(z,w)]
+  where g (a,b) = a /= z || b /= w
+approach FourWay (x,y) (z,w) =  zip (init [x..z]) (repeat y) ++ (zip (repeat z) [y..w])
+
 
 nodeLookUp :: [Rectangle Int] -> Array Int (Rectangle Int)
 nodeLookUp xs = listArray (1,length xs) xs
 
-edgesOf :: Node -> Rectangle Int -> [Rectangle Int] -> [Edge]
-edgesOf n r = filter (touching r . snd) . zip nats
-  where touching x y = (==) 0 (rDist x y)
+allEdges :: [Rectangle Int] -> [(Edge,Float)]
+allEdges rs = concatMap (flip (uncurry edgesOf) rs) $ zip [0..] rs  
+
+edgesOf :: Node -> Rectangle Int -> [Rectangle Int] -> [(Edge,Float)]
+edgesOf n r rs = map f . filter (touching r . snd) $ zip nats rs
+  where touching x y = x /= y && (==) 0 (rDist x y)
+        nats = iterate (+1) 0
+        f (m,s) = ((n,m),centersDistance r s)
+
+mkDecomposition :: (Ord n) => [Rectangle n] -> Decomposition n
+mkDecomposition xs = DD (M.fromList $ zip nats xs) (M.fromList $ zip xs nats)
+  where nats = iterate (+1) 0
 
 newEdges :: [Rectangle Int] -> [Edge]
 newEdges = posOfValidPairs touching
   where touching x y = (==) 0 (rDist x y)
         
 posOfValidPairs :: (a -> a -> Bool) -> [a] -> [(Int,Int)]
-posOfValidPairs g = map fsts . validPairs g' . zip [1..]
+posOfValidPairs g = map fsts . validPairs g' . zip [0..]
   where g' x y = g (snd x) (snd y)
         fsts (x,y) = (fst x, fst y)
         
 --assume g x y = g y x
 validPairs :: (a -> a -> Bool) -> [a] -> [(a,a)] 
-validPairs g xs = filter (uncurry g) [(i,j) | i <- xs , j <- xs]
+validPairs g xs = [(i,j) | i <- xs , j <- xs, g i j]
 
 f :: Eq a => [(a,b)] -> [[(a,b)]]
 f [] = [] 

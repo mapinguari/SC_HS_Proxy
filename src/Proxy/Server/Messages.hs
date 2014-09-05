@@ -105,4 +105,11 @@ instance Serialize Commands where
         serializesCommands [] = (""++)
         serializesCommands (c:cs) = (':' :) . serializes c . serializesCommands cs
 
+{-
+occupied :: [UnitData] -> [Location]
+occupied = concatMap (\u -> let (x,y) = unitLocation u
+                                w = tileWidth . unitType $ u
+                                h = tileHeight . unitType $ u in   
+                            range ((x,y), (x + w - 1, y + h - 1)))
 
+-}

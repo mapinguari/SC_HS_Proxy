@@ -1,6 +1,6 @@
 module Proxy.PotentialFields.Internal.SimpleActions where
 import Proxy.PotentialFields.Internal.Fields
-import Proxy.Commands
+import Proxy.Command.Commands
 import Control.Monad.Reader
 import Data.Complex
 import Proxy.Types.Game
@@ -18,7 +18,12 @@ toward :: UnitData -> Location -> UnitAction
 toward ud l = mapReader (rightClickAt uid) field
   where uid = unitId ud
         field = zeta passAvU actAv (Just l) peaApp ud
-
+        
+        
+attackTowards :: UnitData -> Location -> UnitAction
+attackTowards ud l = mapReader (attackMove uid) field
+ where uid = unitId ud
+       field = zeta passAvU actAv (Just l) peaApp ud
 
 -------------------------------------------------------------------------------------------------
 --field accumulation zeta returns a computation which will return the resultant location for a unit to move to.
@@ -67,3 +72,7 @@ f :: (Floating a) => a -> a -> a
 f a theta = (4 * a * theta)  / pi 
 
 ---------------------------------------------------------------------------------------------------------------------
+
+
+allActions :: [UnitAction] -> FieldEnvironment -> [Command]
+allActions ua  = runReader (sequence ua) 

@@ -35,7 +35,7 @@ type Walkable = Bool
 
 -- | Contains information about a tile (consider changing to field name based)
 
-data Tile = Tile {height::Height, walkable::Walkable, buildable::Buildable} deriving Show
+data Tile = Tile {height::Height, walkable::Walkable, buildable::Buildable} deriving (Show,Read)
 
 -- | All the species in SC
 
@@ -70,7 +70,7 @@ data PlayerInfo = PlayerInfo { playerId :: PlayerId
                              }
                   
 instance Show PlayerInfo where
-  show pI = playerName pI ++ "-" ++ (show.playerRace) pI ++ "-" ++ (show.playerType) pI
+  show pI = playerName pI ++ "-" ++ (show.playerRace) pI ++ "-" ++ (show.playerType) pI ++ "-" ++ (show . playerId $ pI)
 
 -- | DataTypes for each of the types of other players
 data Player = Me {playerInfo :: PlayerInfo}
